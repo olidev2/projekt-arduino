@@ -1,6 +1,7 @@
 import pygame
 
 from przycisk import Przycisk
+from strzalki import Strzalka
 class Interfejs:
     def __init__(self, szerokosc, wysokosc):
         self.szerokosc = szerokosc
@@ -13,6 +14,12 @@ class Interfejs:
             Przycisk(100, 100, 200, 50, (100, 100, 100), "Wybierz port"),
             Przycisk(100, 200, 200, 50, (100, 100, 100), "Przycisk 2")
         ]
+        self.strzalki = [
+            Strzalka(680, 600, 50, 50, (100, 100, 100),"lewo"),
+            Strzalka(820, 600, 50, 50, (100, 100, 100),"prawo"),
+            Strzalka(750, 600, 50, 50, (100, 100, 100),"dol"),
+            Strzalka(750, 530, 50, 50, (100, 100, 100),"gora"),
+        ]
     def event_handler(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -21,6 +28,9 @@ class Interfejs:
             for przycisk in self.przyciski:
                 if przycisk.czy_klikniety(event):
                     print(f"Kliknięto {przycisk.tekst}")
+            for strzalka in self.strzalki:
+                if strzalka.czy_klikniety(event):
+                    print(f"Kliknięto strzałkę {strzalka.kierunek}")
     def coordinate_system(self):
         # metoda do odbierania danych i obliczen matematycznych
         pass
@@ -29,6 +39,8 @@ class Interfejs:
         pygame.draw.circle(self.ekran, (200,200,200), (200, 630), 150)
         for przycisk in self.przyciski:
             przycisk.rysuj(self.ekran)
+        for strzalka in self.strzalki:
+            strzalka.rysuj(self.ekran)
         pygame.display.flip()
     def run(self):
         while self.dziala:
