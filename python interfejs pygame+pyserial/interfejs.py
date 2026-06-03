@@ -2,17 +2,20 @@ import pygame
 
 from przycisk import Przycisk
 from strzalki import Strzalka
+from backend import Backend
 class Interfejs:
     def __init__(self, szerokosc, wysokosc):
         self.szerokosc = szerokosc
         self.wysokosc = wysokosc
         self.ekran = pygame.display.set_mode((szerokosc, wysokosc))
         pygame.display.set_caption("Interfejs łazika")
-    
+        self.port_draw = False
         self.dziala = True
+        self.backend = Backend()
+        self.przyciski_portow = []
         self.przyciski = [
-            Przycisk(100, 100, 200, 50, (100, 100, 100), "Wybierz port"),
-            Przycisk(100, 200, 200, 50, (100, 100, 100), "Przycisk 2")
+            Przycisk(100, 100, 200, 50, (100, 100, 100), "Wybierz port","port"),
+            Przycisk(100, 200, 200, 50, (100, 100, 100), "Przycisk 2", "test")
         ]
         self.strzalki = [
             Strzalka(680, 600, 50, 50, (100, 100, 100),"lewo"),
@@ -28,6 +31,35 @@ class Interfejs:
             for przycisk in self.przyciski:
                 if przycisk.czy_klikniety(event):
                     print(f"Kliknięto {przycisk.tekst}")
+                    match przycisk.rola:
+                        case "port":
+                            self.port_draw = not self.port_draw 
+                            
+                            if self.port_draw:
+                                self.backend.update_ports()
+                                ports = self.backend.get_ports()
+                                
+                                self.przyciski_portow.clear() 
+                                
+                                for i, port_nazwa in enumerate(ports):
+                                    nowy_przycisk = Przycisk(350, 100 + (i * 60), 200, 50, (80, 80, 150), port_nazwa, "polacz_port")
+                                    self.przyciski_portow.append(nowy_przycisk)
+                            else:
+                                self.przyciski_portow.clear()
+                        case _:
+                            print("Inna rola")
+            if self.port_draw:
+                for port_przycisk in self.przyciski_portow:
+                    if port_przycisk.czy_klikniety(event):
+                        if not port_przycisk.polaczony:
+                            print(f"Wybrano do połączenia: {port_przycisk.tekst}")
+                            self.backend.connect(port_przycisk.tekst)
+                            if self.backend.getconnection() is not None:
+                                port_przycisk.polaczony = True
+                        else:
+                            print(f"Odłączono: {port_przycisk.tekst}")
+                            self.backend.disconnect()
+                            port_przycisk.polaczony = False
             for strzalka in self.strzalki:
                 if strzalka.czy_klikniety(event):
                     print(f"Kliknięto strzałkę {strzalka.kierunek}")
@@ -41,12 +73,17 @@ class Interfejs:
             przycisk.rysuj(self.ekran)
         for strzalka in self.strzalki:
             strzalka.rysuj(self.ekran)
+        if self.port_draw:
+            for port_przycisk in self.przyciski_portow:
+                port_przycisk.rysuj(self.ekran)
         pygame.display.flip()
     def run(self):
         while self.dziala:
             self.event_handler()
             self.coordinate_system()
             self.draw()
+        print("Zamykanie interfejsu... Sprzątanie portów.")
+        self.backend.disconnect()
         pygame.quit()
 if __name__ == "__main__":
     interfejs = Interfejs(1200, 800)
