@@ -21,7 +21,7 @@ class Backend:
     def connect(self, port):
         if port in self.ports:
             try:
-                self.connection = serial.Serial(port, 9600)
+                self.connection = serial.Serial(port, 9600) #wybieramy 9600 jako standardowa predkosc komunikacji z arduino, w arduino tez trzeba ustawic ta sama predkosc
                 time.sleep(2)  # czekam na stabilizacje polaczenia z arduino
                 self.connection.write(b'W') # wysylamy sygnal testowy do arduino, 'W' trzeba w arduino odczytac i napisac instrukcje interpretacji tego za pomoca wbudowanego leda
                 print("Wysłano sygnał testowy 'W' do Arduino!")
