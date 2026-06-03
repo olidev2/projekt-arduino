@@ -22,8 +22,8 @@ class Backend:
         if port in self.ports:
             try:
                 self.connection = serial.Serial(port, 9600)
-                time.sleep(2)  # Czekaj na stabilizację połączenia
-                self.connection.write(b'W') # Wysyłamy literę "W"
+                time.sleep(2)  # czekam na stabilizacje polaczenia z arduino
+                self.connection.write(b'W') # wysylamy sygnal testowy do arduino, 'W' trzeba w arduino odczytac i napisac instrukcje interpretacji tego za pomoca wbudowanego leda
                 print("Wysłano sygnał testowy 'W' do Arduino!")
                 print(f"Połączono z {port}")
             except serial.SerialException as e:
