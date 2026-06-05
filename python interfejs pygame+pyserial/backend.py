@@ -1,41 +1,51 @@
 import serial.tools.list_ports
 import time
 
-
 class Backend:
     def __init__(self):
         self.connection = None
         self.ports = []
         self.any_ports = False
         self.update_ports()
+
     def update_ports(self):
         self.ports = [ports.device for ports in serial.tools.list_ports.comports()]
         if self.ports:
             self.any_ports = True
-        for port in self.ports:
-                print(f"port: {port}")
+
     def get_ports(self):
         return self.ports
+
     def has_ports(self):
         return self.any_ports
+
     def connect(self, port):
         if port in self.ports:
             try:
-                self.connection = serial.Serial(port, 9600) #wybieramy 9600 jako standardowa predkosc komunikacji z arduino, w arduino tez trzeba ustawic ta sama predkosc
-                time.sleep(2)  # czekam na stabilizacje polaczenia z arduino
-                self.connection.write(b'W') # wysylamy sygnal testowy do arduino, 'W' trzeba w arduino odczytac i napisac instrukcje interpretacji tego za pomoca wbudowanego leda
-                print("Wysłano sygnał testowy 'W' do Arduino!")
-                print(f"Połączono z {port}")
+                self.connection = serial.Serial(port, 9600, timeout=1)
+                print(f"Backend: Połączono z {port}. Usypiam na 2s dla resetu Arduino...")
+                time.sleep(2)
+                return True
             except serial.SerialException as e:
-                print(f"Błąd połączenia: {e}")
+                print(f"Backend: Błąd połączenia: {e}")
+                self.connection = None
+                return False
         else:
-            print(f"Port {port} nie jest dostępny")
+            print(f"Backend: Port {port} nie jest dostępny")
+            return False
+
     def getconnection(self):
         return self.connection
+
     def disconnect(self):
         if self.connection is not None and self.connection.is_open:
-            
             self.connection.close() 
             print("Backend: Port został zamknięty i jest znowu wolny.")
-            
         self.connection = None
+
+    def wyslij_komende(self, komenda):
+        if self.connection is not None and self.connection.is_open:
+            try:
+                self.connection.write(komenda.encode())
+            except Exception as e:
+                print(f"Backend: Błąd wysyłania komendy: {e}")
