@@ -2,6 +2,7 @@ import pygame
 from przycisk import Przycisk
 from strzalki import Strzalka
 from backend import Backend
+from napis import Napis
 
 class Interfejs:
     def __init__(self, szerokosc, wysokosc):
@@ -18,13 +19,19 @@ class Interfejs:
         
         self.przyciski = [
             Przycisk(100, 100, 200, 50, (100, 100, 100), "Wybierz port", "port"),
-            Przycisk(100, 200, 200, 50, (100, 100, 100), "Przycisk 2", "test")
+            Przycisk(100, 200, 200, 50, (100, 100, 100), "Przycisk 2", "test"),
+            Przycisk(950, 600, 200, 50, (100, 100, 100), "Radar", "radar")
         ]
         self.strzalki = [
             Strzalka(680, 600, 50, 50, (100, 100, 100), "lewo"),
             Strzalka(820, 600, 50, 50, (100, 100, 100), "prawo"),
             Strzalka(750, 600, 50, 50, (100, 100, 100), "dol"),
             Strzalka(750, 530, 50, 50, (100, 100, 100), "gora"),
+        ]
+
+        self.napis = [
+            Napis(100, 300, 200, 50, "Interfejs Łazika", 40),
+            Napis(580, 400, 400, 50, "Sterowanie", 24)
         ]
 
     def event_handler(self):
@@ -50,6 +57,8 @@ class Interfejs:
                                     self.przyciski_portow.append(nowy_przycisk)
                             else:
                                 self.przyciski_portow.clear()
+                        case "radar":
+                            self.backend.wyslij_komende('R')
                         case _:
                             print("Inna rola")
 
@@ -88,6 +97,8 @@ class Interfejs:
             for port_przycisk in self.przyciski_portow:
                 port_przycisk.rysuj(self.ekran)
                 
+        for napis in self.napis:
+            napis.rysuj(self.ekran)
         pygame.display.flip()
 
     def run(self):
