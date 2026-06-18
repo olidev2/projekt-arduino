@@ -47,5 +47,16 @@ class Backend:
         if self.connection is not None and self.connection.is_open:
             try:
                 self.connection.write(komenda.encode())
+                print(f"Wyslano komendę: {komenda}")
             except Exception as e:
                 print(f"Backend: Błąd wysyłania komendy: {e}")
+
+    def odbierz_dane(self):
+        if self.connection is not None and self.connection.is_open:
+            try:
+                if self.connection.in_waiting > 0:
+                    linia = self.connection.readline().decode('utf-8').strip()
+                    return linia
+            except Exception as e:
+                print(f"Backend: Błąd odczytu danych: {e}")
+        return None

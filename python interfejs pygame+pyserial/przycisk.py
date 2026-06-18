@@ -7,29 +7,35 @@ class Przycisk:
         self.tekst = tekst
         self.rola = rola
         self.kolor_aktywny = (min(kolor[0]+30, 255), min(kolor[1]+30, 255), min(kolor[2]+30, 255))
+       
+        self.kolor_wcisniety = (max(kolor[0]-30, 0), max(kolor[1]-30, 0), max(kolor[2]-30, 0)) 
+        
         self.click_flag = False
         
-        # Flagi stanu połączenia
         self.polaczony = False
-        self.kolor_polaczony = (50, 200, 50) # Zielony
+        self.kolor_polaczony = (50, 200, 50) # zielony
         
         pygame.font.init()
         self.font = pygame.font.SysFont(None, 24)
 
     def rysuj(self, ekran):
         poz_myszy = pygame.mouse.get_pos()
+        lewy_klik_wcisniety = pygame.mouse.get_pressed()[0]
         
-        # Priorytety kolorów
+       
         if getattr(self, 'polaczony', False):
             aktualny_kolor = self.kolor_polaczony
         elif self.rect.collidepoint(poz_myszy):
-            aktualny_kolor = self.kolor_aktywny
+            if self.rola == "radar" and lewy_klik_wcisniety:
+                aktualny_kolor = self.kolor_wcisniety
+            else:
+                aktualny_kolor = self.kolor_aktywny
         else:
             aktualny_kolor = self.kolor
             
         pygame.draw.rect(ekran, aktualny_kolor, self.rect)
         
-        if self.rola == "polacz_port":
+        if self.rola in ["polacz_port", "radar"]:
             text_surf = self.font.render(self.tekst, True, (255, 255, 255))
             text_rect = text_surf.get_rect(center=self.rect.center)
             ekran.blit(text_surf, text_rect)
@@ -38,6 +44,8 @@ class Przycisk:
             match self.rola:
                 case "polacz_port":
                     pass
+                case "radar":
+                    pass 
                 case _:
                     text_surf = self.font.render(self.tekst, True, (255, 255, 255))
                     text_rect = text_surf.get_rect(center=self.rect.center)

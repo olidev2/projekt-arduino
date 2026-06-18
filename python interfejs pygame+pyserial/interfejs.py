@@ -1,4 +1,5 @@
 import pygame
+import math  # <-- Nowy, niezbędny import do trygonometrii
 from przycisk import Przycisk
 from strzalki import Strzalka
 from backend import Backend
@@ -16,6 +17,9 @@ class Interfejs:
         self.dziala = True
         self.backend = Backend()
         self.przyciski_portow = []
+        
+        # słownik do przechowywania danych ze skanera (kąt: dystans)
+        self.punkty_radaru = {}
         
         self.przyciski = [
             Przycisk(100, 100, 200, 50, (100, 100, 100), "Wybierz port", "port"),
@@ -39,7 +43,7 @@ class Interfejs:
             if event.type == pygame.QUIT:
                 self.dziala = False
 
-            # Wyłapywanie puszczenia przycisku (STOP)
+            # wyłapywanie puszczenia przycisku myszy (STOP)
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 self.backend.wyslij_komende('S')
 
@@ -58,14 +62,17 @@ class Interfejs:
                             else:
                                 self.przyciski_portow.clear()
                         case "radar":
-                            self.backend.wyslij_komende('R')
+                            # wysłanie komendy startu skanowania
+                            self.backend.wyslij_komende('r')
+                            # zzyszczenie starych kropek z ekranu przed nowym skanem
+                            self.punkty_radaru.clear() 
                         case _:
                             print("Inna rola")
 
             if self.port_draw:
                 for port_przycisk in self.przyciski_portow:
                     if port_przycisk.czy_klikniety(event):
-                        if not port_przycisk.polaczony:
+                        if not getattr(port_przycisk, 'polaczony', False):
                             print(f"Wybrano do połączenia: {port_przycisk.tekst}")
                             sukces = self.backend.connect(port_przycisk.tekst)
                             if sukces:
@@ -83,10 +90,48 @@ class Interfejs:
                         case "lewo": self.backend.wyslij_komende('L')
                         case "prawo": self.backend.wyslij_komende('R')
 
+    def coordinate_system(self):
+        # odbieranie i rozpakowywanie danych z radaru
+        odebrane_dane = self.backend.odbierz_dane()
+        
+        if odebrane_dane and odebrane_dane.startswith("R:"):
+            wartosci = odebrane_dane[2:].split(",")
+            
+            if len(wartosci) == 2:
+                try:
+                    kat = int(wartosci[0])
+                    dystans = int(wartosci[1])
+                    
+                    # ignorujemy błędy pomiarowe (np. -1, gdy radar nic nie złapie)
+                    if dystans > 0:
+                        self.punkty_radaru[kat] = dystans
+                        print(f"Skan -> Kąt: {kat}°, Odległość: {dystans} cm")
+                        
+                except ValueError:
+                    print("Błąd parsowania: Odebrane wartości nie są liczbami.")
+
     def draw(self):
         self.ekran.fill((0, 0, 0))
-        pygame.draw.circle(self.ekran, (200, 200, 200), (200, 630), 150)
         
+        
+        srodek_x = 200
+        srodek_y = 630
+        promien_szarego_kola = 150
+        
+       
+        pygame.draw.circle(self.ekran, (200, 200, 200), (srodek_x, srodek_y), promien_szarego_kola)
+        
+        # radar rysowanie kropek
+        for kat, dystans in self.punkty_radaru.items():
+            radiany = math.radians(kat)
+            
+            r = min(dystans, promien_szarego_kola)
+            
+            x = srodek_x + r * math.cos(radiany)
+            y = srodek_y - r * math.sin(radiany)
+            
+            pygame.draw.circle(self.ekran, (255, 50, 50), (int(x), int(y)), 3)
+
         for przycisk in self.przyciski:
             przycisk.rysuj(self.ekran)
             
@@ -99,11 +144,13 @@ class Interfejs:
                 
         for napis in self.napis:
             napis.rysuj(self.ekran)
+            
         pygame.display.flip()
 
     def run(self):
         while self.dziala:
             self.event_handler()
+            self.coordinate_system()
             self.draw()
             
         print("Zamykanie interfejsu... Sprzątanie portów.")
